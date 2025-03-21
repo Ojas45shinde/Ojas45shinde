@@ -1,5 +1,5 @@
 # 💫 About Me:
-Computer Engineering student with Proven expertise in Python, C, C++ and SQL <br>Skilled in developing data driven solutions. <br>Experience includes Hands on internship, Projects. And academic Work and in  <br>data analysis and Machine Learning. Demonstrating Proficiency in Integrating <br>technical and analytical skills.
+Computer Engineering student with Proven expertise in Python, C, C++ and SQL, Skilled in developing data driven solutions. Experience includes Hands on internship, Projects. And academic Work and in data analysis and Machine Learning. Demonstrating Proficiency in Integrating technical and analytical skills.
 
 
 ## 🌐 Socials:
