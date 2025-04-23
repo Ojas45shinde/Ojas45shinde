@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Attendance Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(to right, #6a11cb, #08327a);
+            color: white;
+            margin: 0;
+            padding: 50px 0;
+        }
+
+        .container {
+            background: rgba(153, 86, 86, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+            width: 350px;
+            margin: auto;
+            color: rgb(193, 198, 24);
+            position: relative;
+        }
+
+        .user-logo {
+            width: 80px;
+            margin-bottom: 10px;
+        }
+
+        input,
+        select {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #6a11cb;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #412961;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul li {
+            background: #eee;
+            margin: 5px;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .delete-btn {
+            background: rgb(9, 172, 187);
+            padding: 5px;
+            border: none;
+            cursor: pointer;
+            color: white;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" id="auth-container">
+        <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png" alt="User Logo" class="user-logo">
+        <h2>Teacher Login</h2>
+        <input type="text" id="teacher-username" placeholder="Enter Username">
+        <input type="password" id="teacher-password" placeholder="Enter Password">
+        <button onclick="loginTeacher()">Login</button>
+        <button onclick="registerTeacher()">Register</button>
+    </div>
+
+    <div class="container" id="dashboard-container" style="display: none;">
+        <h2>Teacher Dashboard</h2>
+        <button onclick="logoutTeacher()">Logout</button>
+
+        <h3>Add Student</h3>
+        <input type="text" id="student-name" placeholder="Enter Student Name">
+        <input type="text" id="student-roll" placeholder="Enter Roll No">
+        <button onclick="addStudent()">Add Student</button>
+
+        <h3>Mark Attendance</h3>
+        <select id="student-list">
+            <option value="">Select Student</option>
+        </select>
+        <button onclick="markAttendance('Present')">Present</button>
+        <button onclick="markAttendance('Absent')">Absent</button>
+
+        <h3>Attendance Records</h3>
+        <ul id="attendance-list"></ul>
+        <button onclick="clearAllData()">Delete All Data</button>
+    </div>
+
+    <script>
+        let currentTeacher = null;
+
+        function getTeacherKey() {
+            return `students_${currentTeacher}`;
+        }
+
+        function registerTeacher() {
+            let username = document.getElementById("teacher-username").value;
+            let password = document.getElementById("teacher-password").value;
+            if (!username || !password) {
+                alert("Please enter a username and password");
+                return;
+            }
+            localStorage.setItem(`teacher_${username}`, JSON.stringify({ username, password }));
+            alert("Registration successful! Please log in.");
+        }
+
+        function loginTeacher() {
+            let username = document.getElementById("teacher-username").value;
+            let password = document.getElementById("teacher-password").value;
+            let stored = localStorage.getItem(`teacher_${username}`);
+            let teacher = stored ? JSON.parse(stored) : null;
+
+            if (teacher && teacher.password === password) {
+                currentTeacher = username;
+                document.getElementById("auth-container").style.display = "none";
+                document.getElementById("dashboard-container").style.display = "block";
+                loadStudents();
+                loadAttendanceRecords();
+            } else {
+                alert("Invalid credentials!");
+            }
+        }
+
+        function logoutTeacher() {
+            currentTeacher = null;
+            document.getElementById("auth-container").style.display = "block";
+            document.getElementById("dashboard-container").style.display = "none";
+        }
+
+        function addStudent() {
+            let name = document.getElementById("student-name").value;
+            let roll = document.getElementById("student-roll").value;
+            if (!name || !roll) {
+                alert("Please enter both Name and Roll No!");
+                return;
+            }
+            let students = JSON.parse(localStorage.getItem(getTeacherKey())) || {};
+            students[roll] = { name: name, attendance: {} };
+            localStorage.setItem(getTeacherKey(), JSON.stringify(students));
+            loadStudents();
+        }
+
+        function loadStudents() {
+            let students = JSON.parse(localStorage.getItem(getTeacherKey())) || {};
+            let studentList = document.getElementById("student-list");
+            studentList.innerHTML = '<option value="">Select Student</option>';
+            Object.keys(students).forEach(roll => {
+                let option = document.createElement("option");
+                option.value = roll;
+                option.innerText = `${students[roll].name} (${roll})`;
+                studentList.appendChild(option);
+            });
+        }
+
+        function markAttendance(status) {
+            let roll = document.getElementById("student-list").value;
+            if (!roll) {
+                alert("Please select a student!");
+                return;
+            }
+            let students = JSON.parse(localStorage.getItem(getTeacherKey())) || {};
+            let today = new Date().toLocaleDateString();
+            students[roll].attendance[today] = status;
+            localStorage.setItem(getTeacherKey(), JSON.stringify(students));
+            loadAttendanceRecords();
+        }
+
+        function loadAttendanceRecords() {
+            let students = JSON.parse(localStorage.getItem(getTeacherKey())) || {};
+            let attendanceList = document.getElementById("attendance-list");
+            attendanceList.innerHTML = "";
+            Object.keys(students).forEach(roll => {
+                Object.keys(students[roll].attendance).forEach(date => {
+                    let li = document.createElement("li");
+                    li.innerText = `${date} - ${students[roll].name} (${roll}) - ${students[roll].attendance[date]}`;
+                    let deleteBtn = document.createElement("button");
+                    deleteBtn.innerText = "Delete";
+                    deleteBtn.classList.add("delete-btn");
+                    deleteBtn.onclick = function () {
+                        deleteAttendance(roll, date);
+                    };
+                    li.appendChild(deleteBtn);
+                    attendanceList.appendChild(li);
+                });
+            });
+        }
+
+        function deleteAttendance(roll, date) {
+            let students = JSON.parse(localStorage.getItem(getTeacherKey())) || {};
+            delete students[roll].attendance[date];
+            localStorage.setItem(getTeacherKey(), JSON.stringify(students));
+            loadAttendanceRecords();
+        }
+
+        function clearAllData() {
+            if (confirm("Are you sure you want to delete all data?")) {
+                localStorage.removeItem(getTeacherKey());
+                loadStudents();
+                loadAttendanceRecords();
+            }
+        }
+    </script>
+</body>
+
+</html>
